@@ -1,31 +1,19 @@
-import csv
+# backend/api/logger.py
+import csv, os
 from datetime import datetime
-import os
 
 FILE_NAME = "prediction_log.csv"
 
 def log_prediction(data, prediction, risk_score):
-
     file_exists = os.path.isfile(FILE_NAME)
-
-    with open(FILE_NAME, mode="a", newline="") as file:
-        writer = csv.writer(file)
-
-        # Header (created only once)
+    with open(FILE_NAME, "a", newline="") as f:
+        writer = csv.writer(f)
         if not file_exists:
             writer.writerow([
-                "timestamp",
-                "Age",
-                "MonthlyIncome",
-                "JobSatisfaction",
-                "WorkLifeBalance",
-                "YearsAtCompany",
-                "OverTime",
-                "DistanceFromHome",
-                "Prediction",
-                "RiskScore"
+                "timestamp","Age","MonthlyIncome","JobSatisfaction",
+                "WorkLifeBalance","YearsAtCompany","OverTime",
+                "DistanceFromHome","Prediction","RiskScore"
             ])
-
         writer.writerow([
             datetime.now(),
             data["Age"],
