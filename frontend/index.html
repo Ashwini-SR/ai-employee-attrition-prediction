@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Employee Attrition Predictor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* Body */
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #74ABE2, #5563DE);
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 0;
+    color: #fff;
+}
+
+/* Header */
+header {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    padding: 2rem 0;
+    color: #fff;
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.3);
+}
+
+/* Container */
+.container {
+    max-width: 480px;
+    width: 90%;
+    margin: 1rem auto;
+    background: #fff;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    color: #212529;
+}
+
+/* Inputs */
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: #fff;
+    color: #212529;
+}
+
+input:focus {
+    outline: none;
+    border-color: #28a745;
+    box-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
+}
+
+input:invalid {
+    border-color: #dc3545;
+}
+
+/* Button */
+button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    background: #28a745;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
+/* Result Box */
+.result {
+    margin-top: 25px;
+    padding: 15px;
+    border-radius: 10px;
+    font-weight: bold;
+    display: none;
+    color: #fff;
+}
+
+/* Risk Bar */
+.risk-bar {
+    height: 20px;
+    border-radius: 8px;
+    background: #e0e0e0;
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.risk-fill {
+    height: 100%;
+    text-align: right;
+    padding-right: 8px;
+    line-height: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #fff;
+    width: 0%;
+    transition: width 1.2s ease;
+    border-radius: 8px;
+}
+
+/* AI Tags */
+.ai-tags {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.ai-tags span {
+    background: #ffc107;
+    color: #212529;
+    padding: 4px 8px;
+    margin: 3px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    opacity: 0;
+    transform: translateY(-10px);
+    animation: fadeIn 0.6s forwards;
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* History Container */
+.history-container {
+    margin-top: 30px;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+.history-item {
+    background: #e9ecef;
+    margin: 6px 0;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #212529;
+}
+
+a {
+    display: block;
+    margin-top: 15px;
+    text-align: center;
+    text-decoration: none;
+    color: #007bff;
+    font-weight: 600;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+</style>
+</head>
+<body>
+
+<header>AI Employee Attrition Predictor</header>
+
+<div class="container">
+    <input id="Age" type="number" placeholder="Age" required min="18" max="65">
+    <input id="MonthlyIncome" type="number" placeholder="Monthly Income" required min="1000">
+    <input id="JobSatisfaction" type="number" placeholder="Job Satisfaction (1-4)" required min="1" max="4">
+    <input id="WorkLifeBalance" type="number" placeholder="Work Life Balance (1-4)" required min="1" max="4">
+    <input id="YearsAtCompany" type="number" placeholder="Years At Company" required min="0">
+    <input id="OverTime" type="number" placeholder="Overtime (1=yes 0=no)" required min="0" max="1">
+    <input id="DistanceFromHome" type="number" placeholder="Distance From Home (km)" required min="0">
+
+    <button id="predictBtn">Predict Attrition</button>
+    <div id="resultBox" class="result"></div>
+</div>
+
+<div class="container history-container">
+    <h3 style="text-align:center;">Prediction History (Last 5)</h3>
+    <div id="historyList"></div>
+    <a href="history.html">View Full History →</a>
+</div>
+
+<script>
+const predictBtn = document.getElementById("predictBtn");
+
+predictBtn.addEventListener("click", async function(event){
+    event.preventDefault(); // Stop default behavior
+
+    // Input validation
+    const inputs = ["Age","MonthlyIncome","JobSatisfaction","WorkLifeBalance","YearsAtCompany","OverTime","DistanceFromHome"];
+    for(let id of inputs){
+        const el = document.getElementById(id);
+        if(!el.checkValidity()){ 
+            el.focus(); 
+            alert("Please enter valid values for all fields!"); 
+            return; 
+        }
+    }
+
+    const data = {};
+    inputs.forEach(id => data[id] = +document.getElementById(id).value);
+
+    const resultBox = document.getElementById("resultBox");
+    resultBox.style.display="block";
+    resultBox.style.background="#17a2b8";
+    resultBox.innerHTML="Predicting...";
+
+    try {
+        // Mock prediction for hackathon/demo
+        const result = await mockPredict(data);
+
+        // Set color based on risk
+        let color="#28a745"; 
+        if(result.risk_score>70) color="#dc3545";
+        else if(result.risk_score>40) color="#ffc107";
+
+        // Show initial HTML
+        resultBox.innerHTML=`
+            <p><b>Attrition Prediction:</b> ${result.attrition_prediction}</p>
+            <p><b>Risk Score:</b></p>
+            <div class="risk-bar">
+                <div class="risk-fill" style="background:${color};">${result.risk_score}%</div>
+            </div>
+            <p><b>AI Insights:</b></p>
+            <div class="ai-tags">
+                ${result.ai_explanation.map(tag => `<span style="animation-delay:${0.1*result.ai_explanation.indexOf(tag)}s">${tag}</span>`).join('')}
+            </div>
+        `;
+
+        // Animate risk bar
+        const fill = resultBox.querySelector(".risk-fill");
+        fill.style.width = "0%"; // Reset width
+        setTimeout(()=>{ fill.style.width = result.risk_score + "%"; }, 100); // Animate
+
+        // Save history
+        saveHistory(result.attrition_prediction, result.risk_score, result.ai_explanation);
+
+    } catch(err){
+        resultBox.innerHTML="Error predicting attrition.";
+        resultBox.style.background="#dc3545";
+    }
+});
+
+// Mock AI prediction for demo
+// AI prediction based on input
+function mockPredict(data){
+    // Scale inputs to weighted factors
+    // Age: older employees might have slightly lower attrition risk
+    let ageFactor = (65 - data.Age) / (65-18) * 10; // 0-10
+
+    // MonthlyIncome: lower income → higher risk
+    let incomeFactor = (20000 - Math.min(data.MonthlyIncome, 20000)) / 20000 * 25; // 0-25
+
+    // YearsAtCompany: fewer years → higher risk
+    let yearsFactor = (5 - Math.min(data.YearsAtCompany, 5)) / 5 * 20; // 0-20
+
+    // Overtime: 1=yes → higher risk
+    let overtimeFactor = data.OverTime ? 15 : 0; // 0-15
+
+    // JobSatisfaction: 1-4 → lower satisfaction = higher risk
+    let jsFactor = (5 - data.JobSatisfaction) / 4 * 15; // 0-15
+
+    // WorkLifeBalance: 1-4 → lower = higher risk
+    let wlbFactor = (5 - data.WorkLifeBalance) / 4 * 15; // 0-15
+
+    // DistanceFromHome: higher distance → slightly higher risk
+    let distFactor = Math.min(data.DistanceFromHome,60)/60*10; // 0-10
+
+    // Total risk score
+    let score = ageFactor + incomeFactor + yearsFactor + overtimeFactor + jsFactor + wlbFactor + distFactor;
+    score = Math.round(Math.min(100, Math.max(0, score))); // Ensure 0-100
+
+    // Prediction based on score threshold
+    let prediction = score > 50 ? "Yes" : "No";
+
+    // AI explanation tags
+    let explanations = [];
+    if(data.OverTime) explanations.push("Overtime");
+    if(data.JobSatisfaction <= 2) explanations.push("Job Satisfaction");
+    if(data.WorkLifeBalance <= 2) explanations.push("Work Life Balance");
+    if(data.MonthlyIncome < 5000) explanations.push("Low Income");
+    if(data.YearsAtCompany < 2) explanations.push("New Employee");
+
+    return new Promise(resolve=>{
+        resolve({
+            attrition_prediction: prediction,
+            risk_score: score,
+            ai_explanation: explanations.length ? explanations : ["Normal"]
+        });
+    });
+}
+
+// History management
+function saveHistory(pred, score, explanation){
+    let history = JSON.parse(localStorage.getItem("history"))||[];
+    history.unshift({time:new Date().toLocaleTimeString(), pred, score, explanation});
+    localStorage.setItem("history", JSON.stringify(history));
+    loadHistory();
+}
+
+function loadHistory(){
+    let history = JSON.parse(localStorage.getItem("history"))||[];
+    const container=document.getElementById("historyList");
+    container.innerHTML="";
+    history.slice(0,5).forEach(h=>{
+        container.innerHTML += `
+        <div class="history-item">
+            <b>${h.time}</b> | Prediction: ${h.pred} | Score: ${h.score} | Insights: ${h.explanation.join(", ")}
+        </div>`;
+    });
+}
+loadHistory();
+</script>
+
+</body>
+</html>

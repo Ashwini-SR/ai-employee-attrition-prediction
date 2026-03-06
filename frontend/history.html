@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Prediction History</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ================== BODY ================== */
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #74ABE2, #5563DE);
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 0;
+    color: #fff;
+}
+
+/* ================== HEADER ================== */
+header {
+    background: #007bff;
+    color: white;
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    border-radius: 0.5rem;
+    width: 90%;
+    max-width: 700px;
+    margin-bottom: 2rem;
+}
+
+/* ================== CONTAINER ================== */
+.container {
+    max-width: 700px;
+    width: 90%;
+    margin: 0 auto 2rem auto;
+    background: #fff;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    color: #212529;
+}
+
+/* ================== HISTORY ITEM ================== */
+.history-item {
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    background: #f7f7f7;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.history-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+/* ================== TIME ================== */
+.time {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+/* ================== BADGES ================== */
+.badge {
+    padding: 6px 12px;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+
+.high { background: #e74c3c; } 
+.low { background: #2ecc71; }
+
+/* ================== RISK PROGRESS BAR ================== */
+.progress {
+    margin-top: 8px;
+    height: 14px;
+    background: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 10px;
+    transition: width 0.8s ease;
+}
+
+/* ================== AI TAGS ================== */
+.ai-tags {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    color: #444;
+}
+
+.ai-tags span {
+    background: #ffc107;
+    color: #212529;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+/* ================== BUTTON ================== */
+button {
+    background: #28a745;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    width: 100%;
+    margin-top: 15px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40,167,69,0.3);
+}
+
+/* ================== LINK ================== */
+a {
+    text-decoration: none;
+    color: #007bff;
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* ================== EMPTY MESSAGE ================== */
+.empty-message {
+    text-align: center;
+    padding: 20px;
+    font-size: 1rem;
+    color: #555;
+}
+</style>
+</head>
+<body>
+<header>Prediction History</header>
+<div class="container">
+    <div id="historyList"></div>
+    <button onclick="clearHistory()">Clear History</button>
+    <a href="index.html">← Back to Predictor</a>
+</div>
+
+<script>
+function loadHistory(){
+    let history = JSON.parse(localStorage.getItem("history"))||[];
+    const container = document.getElementById("historyList");
+    if(history.length===0){
+        container.innerHTML="<p style='text-align:center;color:#666;'>No predictions yet.</p>"; return;
+    }
+    container.innerHTML="";
+    history.forEach(h=>{
+        let color = h.score>70?"#e74c3c":h.score>40?"#ffc107":"#2ecc71";
+        let riskClass = h.pred==1?"high":"low";
+        container.innerHTML += `
+        <div class="history-item">
+            <div class="time">${h.time}</div>
+            <b>Prediction:</b> <span class="badge ${riskClass}">${h.pred==1?"High":"Low"}</span>
+            <br><b>Risk Score:</b>
+            <div class="progress"><div class="bar" style="width:${h.score}%;background:${color}"></div></div>
+            <div class="ai-tags"><b>AI Insights:</b> ${h.explanation.map(tag=>`<span>${tag}</span>`).join('')}</div>
+        </div>`;
+    });
+}
+
+function clearHistory(){
+    if(confirm("Clear all prediction history?")){
+        localStorage.removeItem("history");
+        loadHistory();
+    }
+}
+loadHistory();
+</script>
+</body>
+</html>
