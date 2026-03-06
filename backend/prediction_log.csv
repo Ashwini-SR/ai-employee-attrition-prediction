@@ -1,0 +1,2 @@
+timestamp,Age,MonthlyIncome,JobSatisfaction,WorkLifeBalance,YearsAtCompany,OverTime,DistanceFromHome,Prediction,RiskScore
+2026-03-06 11:47:43.510419,35,6000,3,2,5,1,10,0,100

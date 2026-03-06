@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import pandas as pd
 import joblib
 import os
-
+from api.logger import log_prediction
 app = FastAPI()
 
 # Load trained model safely
@@ -24,7 +24,6 @@ def predict(data: dict):
 
         df = pd.DataFrame([data])
 
-        # Ensure correct column order
         df = df[[
             "Age",
             "MonthlyIncome",
@@ -37,7 +36,34 @@ def predict(data: dict):
 
         prediction = model.predict(df)[0]
 
-        return {"attrition_prediction": int(prediction)}
+        # Risk score (simple logic for hackathon)
+        risk_score = int(
+            (data["OverTime"] * 30) +
+            ((4 - data["JobSatisfaction"]) * 20) +
+            ((4 - data["WorkLifeBalance"]) * 15) +
+            (data["DistanceFromHome"] * 2)
+        )
+
+        # AI explanation
+        reasons = []
+
+        if data["OverTime"] == 1:
+            reasons.append("Employee works overtime frequently")
+
+        if data["JobSatisfaction"] <= 2:
+            reasons.append("Low job satisfaction")
+
+        if data["WorkLifeBalance"] <= 2:
+            reasons.append("Poor work-life balance")
+
+        if data["DistanceFromHome"] > 15:
+            reasons.append("Long commute distance")
+        log_prediction(data, prediction, risk_score)
+        return {
+            "attrition_prediction": int(prediction),
+            "risk_score": risk_score,
+            "ai_explanation": reasons
+        }
 
     except Exception as e:
         return {"error": str(e)}
